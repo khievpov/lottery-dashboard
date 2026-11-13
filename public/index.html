@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lottery Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#e3e8f0; --bar:#3f5fa6; --card:#fff; --text:#1f2533; --muted:#6b7280; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:Roboto, system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--bar); color:#fff; height:58px; display:flex; align-items:center; padding:0 20px; position:relative; }
+  header .menu { background:none; border:0; color:#fff; cursor:pointer; padding:4px; }
+  header .welcome { position:absolute; left:50%; transform:translateX(-50%); font-weight:700; font-size:16px; }
+  header .right { margin-left:auto; display:flex; align-items:center; gap:18px; font-weight:500; font-size:15px; }
+  header .user { display:flex; align-items:center; gap:6px; }
+  main { padding:14px 12px 24px; }
+  .title { display:flex; align-items:baseline; gap:16px; margin:4px 0 16px; }
+  .title h1 { margin:0; font-size:25px; font-weight:700; }
+  .title span { font-size:25px; color:var(--muted); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 341px)); gap:17px; margin-bottom:18px; }
+  .kpi { background:var(--card); border-radius:8px; padding:18px 26px 20px 28px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .kpi .label { color:#4b5563; font-size:14.5px; margin-bottom:10px; }
+  .kpi .value { font-size:20px; font-weight:700; }
+  .kpi .icon { width:54px; height:44px; border-radius:8px; display:grid; place-items:center; }
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:17px; align-items:start; }
+  .card { background:var(--card); border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:18px; }
+  .card h2 { margin:2px 0 18px; font-size:19px; font-weight:700; }
+  .table-wrap { max-height:520px; overflow-y:auto; }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th { text-align:left; font-weight:700; padding:12px 8px; position:sticky; top:0; background:#fff; white-space:nowrap; }
+  th .sort { cursor:pointer; user-select:none; margin-left:6px; color:#9ca3af; }
+  th .sort b.on { color:#111; }
+  td { padding:10px 8px; border-bottom:1px solid var(--line); }
+  .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:-1px; }
+  .open { background:#22c55e; } .closed { background:#ef4444; }
+  .result.wait { color:#4b5563; }
+  .actions button { border:1px solid #cbd5e1; background:#fff; border-radius:5px; padding:3px 8px; font-size:12px; cursor:pointer; margin-right:4px; }
+  .actions button:hover { background:#f1f5f9; }
+  .charts { display:grid; gap:17px; min-width:0; }
+  .chart-box { position:relative; height:220px; }
+  @media (max-width: 1200px) { .grid { grid-template-columns:1fr; } }
+  @media (max-width: 640px) { header .welcome { display:none; } .kpis { grid-template-columns:1fr; } main { padding:12px 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <button class="menu" aria-label="Menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2.5H3zm0 5h18v2.5H3zm0 5h18v2.5H3z"/></svg></button>
+  <div class="welcome">Welcome, Admin!</div>
+  <div class="right">
+    <span id="clock"></span>
+    <span class="user"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm0 14a8 8 0 01-6.3-3.1C7 15.2 9.4 14.5 12 14.5s5 .7 6.3 2.4A8 8 0 0112 20z"/></svg> j.diaz ▾</span>
+  </div>
+</header>
+
+<main>
+  <div class="title"><h1>Dashboard</h1><span>Monitoring</span></div>
+
+  <section class="kpis">
+    <div class="kpi"><div><div class="label">Total Lottery Sales</div><div class="value" id="k-sales">–</div></div>
+      <div class="icon" style="background:#ede9fe;color:#7c3aed"></div></div>
+    <div class="kpi"><div><div class="label">Number of Tickets</div><div class="value" id="k-tickets">–</div></div>
+      <div class="icon" style="background:#ffedd5;color:#f97316"></div></div>
+    <div class="kpi"><div><div class="label">Number of Canceled Tickets</div><div class="value" id="k-canceled">–</div></div>
+      <div class="icon" style="background:#fee2e2;color:#ef2020"></div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Lottery Status</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Order <span class="sort" data-col="order"><b data-dir="asc">↑</b><b data-dir="desc">↓</b></span></th>
+            <th>Name <span class="sort" data-col="name"><b data-dir="asc">↑</b><b data-dir="desc">↓</b></span></th>
+            <th>Status</th><th>Result</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="charts">
+      <div class="card"><h2>Sales by Lottery</h2><div class="chart-box"><canvas id="salesChart"></canvas></div></div>
+      <div class="card"><h2>Total Sold Tickets</h2><div class="chart-box"><canvas id="ticketsChart"></canvas></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const BARS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="10" width="4" height="10" rx="2"/><rect x="10" y="4" width="4" height="16" rx="2"/><rect x="17" y="8" width="4" height="12" rx="2"/></svg>';
+document.querySelectorAll('.icon').forEach(el => el.innerHTML = BARS);
+
+const pad = n => String(n).padStart(2, '0');
+function tick() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+tick(); setInterval(tick, 1000);
+
+const api = (url, opts) => fetch(url, opts).then(r => r.json());
+const money = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+let sort = { col: 'order', dir: 'asc' };
+
+async function loadSummary() {
+  const s = await api('/api/summary');
+  document.getElementById('k-sales').textContent = money(s.total_sales);
+  document.getElementById('k-tickets').textContent = s.tickets;
+  document.getElementById('k-canceled').textContent = s.canceled;
+}
+
+async function loadTable() {
+  const rows = await api(`/api/lotteries?sort=${sort.col}&dir=${sort.dir}`);
+  document.querySelectorAll('.sort b').forEach(b =>
+    b.classList.toggle('on', b.parentElement.dataset.col === sort.col && b.dataset.dir === sort.dir));
+  document.getElementById('rows').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.sort_order}</td>
+      <td>${r.name}</td>
+      <td><span class="dot ${r.status === 'Open' ? 'open' : 'closed'}"></span>${r.status}</td>
+      <td class="result ${r.result ? '' : 'wait'}">${r.result ?? 'Waiting for winner...'}</td>
+      <td class="actions">
+        <button data-id="${r.id}" data-act="toggle">${r.status === 'Open' ? 'Close' : 'Open'}</button>
+        <button data-id="${r.id}" data-act="result">Result</button>
+      </td>
+    </tr>`).join('');
+}
+
+document.querySelectorAll('.sort b').forEach(b => b.addEventListener('click', () => {
+  sort = { col: b.parentElement.dataset.col, dir: b.dataset.dir }; loadTable();
+}));
+
+document.getElementById('rows').addEventListener('click', async e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  const id = btn.dataset.id; let body;
+  if (btn.dataset.act === 'toggle') body = { status: btn.textContent === 'Close' ? 'Closed' : 'Open' };
+  else { const v = prompt('Winning numbers (e.g. 12-34-56):'); if (!v) return; body = { result: v }; }
+  await api(`/api/lotteries/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  loadTable();
+});
+
+const charts = {};
+function barChart(id, label, labels, data, colors) {
+  const cfg = {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data, backgroundColor: colors, maxBarThickness: 48 }] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 40, color: '#555', generateLabels: c => [{ text: label, fillStyle: '#c5d08d', strokeStyle: '#c5d08d' }] } } },
+      scales: { x: { ticks: { maxRotation: 20, minRotation: 20, color: '#555' } }, y: { beginAtZero: true, ticks: { color: '#555' } } },
+    },
+  };
+  if (charts[id]) { charts[id].data = cfg.data; charts[id].update(); }
+  else charts[id] = new Chart(document.getElementById(id), cfg);
+}
+
+async function loadCharts() {
+  const rows = await api('/api/sales-by-lottery');
+  const labels = rows.map(r => r.name), colors = rows.map(r => r.color);
+  barChart('salesChart', 'Sales', labels, rows.map(r => r.sales), colors);
+  barChart('ticketsChart', 'Tickets', labels, rows.map(r => r.tickets), colors);
+}
+
+function refresh() { loadSummary(); loadTable(); loadCharts(); }
+refresh();
+setInterval(() => { loadSummary(); loadCharts(); }, 15000); // live monitoring
+</script>
+</body>
+</html>

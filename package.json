@@ -1,0 +1,14 @@
+{
+  "name": "lottery-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:init": "psql -h localhost -d lottery_dashboard -f db/schema.sql -f db/seed.sql",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}
