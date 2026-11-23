@@ -1,0 +1,25 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Anguila",
+    "diaz",
+    "Gana",
+    "Lote",
+    "LoteDom",
+    "Loteria",
+    "Matin",
+    "Midi",
+    "minmax",
+    "Nacional",
+    "nowrap",
+    "Primera",
+    "rgba",
+    "Roboto",
+    "Soir",
+    "stylesheet",
+    "Suerte",
+    "trunc"
+  ],
+  "ignorePaths": ["node_modules", "package-lock.json"]
+}
