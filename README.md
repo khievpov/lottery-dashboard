@@ -25,3 +25,40 @@ Set `DATABASE_URL` to use a different database, e.g. `postgres://user:pass@host:
 | PATCH | `/api/lotteries/:id` | `{status}` and/or `{result}` |
 | POST | `/api/tickets` | `{lottery_id, amount}` record a sale |
 | POST | `/api/tickets/:id/cancel` | Cancel a ticket |
+
+## Deploy to Hostinger VPS
+
+Every push to `main` deploys automatically through GitHub Actions ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)).
+
+### 1. One-time VPS setup
+In Hostinger hPanel → VPS, choose an **Ubuntu 22.04/24.04** OS and note the IP. SSH in as root and run:
+```bash
+curl -fsSL https://raw.githubusercontent.com/khievpov/lottery-dashboard/main/deploy/setup-vps.sh -o setup-vps.sh
+sudo bash setup-vps.sh
+```
+With a domain pointed at the VPS (an A record to the VPS IP), add HTTPS:
+```bash
+sudo DOMAIN=dashboard.example.com EMAIL=you@example.com bash setup-vps.sh
+```
+The script installs Node 22, PostgreSQL, nginx and pm2, creates a `deploy` user and a database with a random password (saved in `/var/www/lottery-dashboard/.env`), loads the sample data, and serves the app on port 80.
+
+### 2. Give GitHub an SSH key for the VPS
+On your computer:
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/lottery_deploy -N "" -C "github-actions-deploy"
+```
+Copy the contents of `~/.ssh/lottery_deploy.pub` into `/home/deploy/.ssh/authorized_keys` on the VPS.
+
+### 3. Add repository secrets
+GitHub → repo → **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Secret | Value |
+|---|---|
+| `VPS_HOST` | VPS IP address |
+| `VPS_USER` | `deploy` |
+| `VPS_SSH_KEY` | contents of `~/.ssh/lottery_deploy` (the private key) |
+| `VPS_PORT` | optional, defaults to `22` |
+
+Then push to `main`, or run the workflow from the **Actions** tab. The last step checks that `/api/summary` responds.
+
+Note: `npm run db:init` drops all tables. Don't run it on the VPS after real data exists.
