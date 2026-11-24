@@ -2,14 +2,16 @@
 
 Node + Express + PostgreSQL. The UI is in `public/index.html` and uses Chart.js.
 
-## Setup
+## Setup (local, macOS with Postgres.app)
+This Mac also runs other PostgreSQL servers on port 5432, so the app's database runs from Postgres.app on port **5434**.
 ```bash
-createdb -h localhost lottery_dashboard
 npm install
-npm run db:init      # creates tables + loads sample data (drops existing tables)
-npm start            # http://localhost:3000
+cp .env.example .env   # DATABASE_URL=postgres://localhost:5434/lottery_dashboard
+npm run db:start       # start Postgres.app's data on port 5434 (once after each restart)
+npm start              # http://localhost:3000
 ```
-Set `DATABASE_URL` to use a different database, e.g. `postgres://user:pass@host:5432/db`.
+First time only: `createdb -h localhost -p 5434 lottery_dashboard && npm run db:init` (drops existing tables).
+Stop the database with `npm run db:stop`.
 
 ## Tables
 - `users` — admin users (`j.diaz`)

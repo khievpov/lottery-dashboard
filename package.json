@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:init": "psql -h localhost -d lottery_dashboard -f db/schema.sql -f db/seed.sql",
-    "start": "node server.js"
+    "db:start": "pg_ctl -D \"$HOME/Library/Application Support/Postgres/var-17\" -o \"-p 5434\" -l /tmp/lottery-pg.log -w start",
+    "db:stop": "pg_ctl -D \"$HOME/Library/Application Support/Postgres/var-17\" stop",
+    "db:init": "psql -h localhost -p 5434 -d lottery_dashboard -f db/schema.sql -f db/seed.sql",
+    "start": "node --env-file-if-exists=.env server.js"
   },
   "dependencies": {
     "express": "^4.21.2",
